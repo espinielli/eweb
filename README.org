@@ -1,6 +1,6 @@
 * Introduction
-This little project is an attempt to have a minimalistic implementation of
-[[noweb]]'s features.
+This little project is an attempt to have a simple implementation of [[noweb]]'s
+features.
 
 The ones I am fond of and I would like to implement/extend are:
 - code chunks from any language (and maybe some noweb.el extension to be able to
