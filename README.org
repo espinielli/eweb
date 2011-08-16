@@ -1,0 +1,70 @@
+* Introduction
+This little project is an attempt to have a minimalistic implementation of
+[[noweb]]'s features.
+
+The ones I am fond of and I would like to implement/extend are:
+- code chunks from any language (and maybe some noweb.el extension to be able to
+  have mode change accordingly)
+  - I would like to be able to specify a list of name/value pairs to be used
+    when rendering the doc by the listings LaTeX package.
+    So something like
+       #+BEGIN_SRC noweb
+       <<a piece of Ada code [language=[95]Ada, stepnumber=2]>>=
+       with Ada.Text_IO; use Ada.Text_IO;
+       procedure Hello is
+       begin
+         Put_Line("Hello, world!");
+       end Hello;
+       @
+       #+END_SRC
+    would result in something like
+    #+BEGIN_SRC latex
+    begin{lstlisting}[language={[95]Ada}, stepnumber=2]
+    with Ada.Text_IO; use Ada.Text_IO;
+    procedure Hello is
+    begin
+      Put_Line("Hello, world!");
+    end Hello;
+    \end{lstlisting}
+    #+END_SRC
+- weaving and tangling
+  - I am not sure yet whether to include some ideas from [[http://mpastell.com/pweave/index.html][Pweave]]
+- indexing ala noindex, i.e. with hook for extensibility (pipes?)
+
+* Differences with noweb.py
+** TODO Concatenation of code chunks
+   The original noweb.py does not support concatenation of code chunks with the
+   same name contrary to noweb's behaviour, see for example [[man:NOWEB][noweb (1)]] man page. 
+** TODO Allow escaped << or >>
+   The original noweb.py does not support escaping of << or >> in code chunks
+   contrary to noweb's behaviour, see for example [[man:NOWEB][noweb (1)]] man page. 
+   
+
+
+* Why Python
+The selection of Python as programming language is purely practical: 
+- it is used/know widely
+- it is by default installed on Linux distros (contrary
+  to current [Icon] and beta [Lua] version of noweb);
+- it is expressive and with batteries included, i.e. a huge/useful amount of
+  libraries.
+
+* Acknowledgement
+This sarted as fork from what was developed by Jonathan Aquino: his work has to be
+acknowledged and praised, see [[http://jonaquino.blogspot.com/2010/04/nowebpy-or-worlds-first-executable-blog.html][his blog entry]].
+
+Inspiration (or maybe not?) from [[Pweave]] by Matti Pastel.
+
+Great inspiration from [[www.python.org][Python]] by Guido van Rossum.
+
+An immense hug to Alan Kay for inspiring me and let me discover [[http://www.tinlizzie.org/ometa/][OMeta]] by Alex Warth.
+
+The design of a system where to run it all, i.e. [[http://en.wikipedia.org/wiki/Unix][Unix]] by Ken Thompson, Dennis
+Ritchie, Brian Kernighan, Douglas McIlroy, Joe Ossanna and collegues from Bell
+labs.
+
+An Unix-based system, i.e. [[http://en.wikipedia.org/wiki/Linux][Linux]] thanks initially to Linus Torvalds and many
+others later, but also [[http://en.wikipedia.org/wiki/OS_X][Mac OS X]] by Steve Jobs & Co.
+
+Last but surely not least, Norman Ramsey for [[http://www.cs.tufts.edu/~nr/noweb/][noweb]].
+

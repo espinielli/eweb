@@ -1,0 +1,406 @@
+% -*- mode: Noweb; noweb-code-mode: python-mode -*-
+\documentclass[a4paper]{report}
+
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Define a new 'leo' style for the noweb package that will use a smaller font.
+\makeatletter
+\def\url@leostyle{%
+  \@ifundefined{selectfont}{\def\UrlFont{\sf}}{\def\UrlFont{\small\ttfamily}}}
+\makeatother
+%% Now actually use the newly defined style.
+%%% NOWEB style
+\usepackage{noweb}
+% the followin nowebstyle (1) options sholud be concatenated
+% and separated by only a comma (','):
+% shift: Shift text to the left so that long code lines will not extend off
+%        the right-hand side of the page.
+% externalindex: Use an index generated with noindex(1).
+% webnumbering: Number chunks consecutively, in WEB style, instead of
+%        using sub-page numbers.
+% longxref: small paragraphs after each chunk, as in Knuth, for chunk
+%        cross-reference.
+% subscriptidents: identifiers in code, including quoted code will be
+%        subscripted with the chunk number of its definition.
+% longchunks: When expanding \nowebchunks, show page numbers of definitions
+%        and uses of each chunk.
+% smallcode: Set code in LaTeX \small font instead of \normalsize.
+\noweboptions{externalindex,webnumbering,longxref,longchunks,smallcode}
+%% macros for inline code chunk refs
+\def\[{\ifhmode\ \fi$[\mkern-2mu[$}
+\def\]{$]\mkern-2mu]$}
+
+
+\usepackage[a4paper,%
+top=3cm,bottom=3cm,left=3.5cm,right=3.5cm,%
+bindingoffset=5mm]{geometry}
+
+% for index production
+\usepackage{makeidx}
+\usepackage{showidx}
+\makeindex
+
+
+\usepackage{xspace}
+\def\ew{\textsc{eWeb}\xspace}
+\def\nw{\textsc{Noweb}\xspace}
+\def\py{\textsc{Python}\xspace}
+
+\def\thankstext{It is always difficult to decide who to thank\dots}
+\title{\ew \\ A little implementation of \nw in \py}
+\author{Enrico Spinielli\thanks{\thankstext}}
+
+%\usepackage[pdftex]{graphicx}
+
+% hyperref must be the last package to include
+\usepackage{hyperref}
+
+\makeatletter
+\AtBeginDocument{
+  \hypersetup{
+    pdftitle = {eWeb --- A little implementation of Noweb in Python.},
+    pdfauthor = {Enrico Spinielli},
+    pdfsubject={Literate programming with eWeb},
+    pdfkeywords={tools, algorithms, python, literate programming}
+  }
+}
+\makeatother
+\urlstyle{leostyle}
+
+
+
+\setcounter{tocdepth}{0} % indice fino a section
+
+
+\begin{document}
+\maketitle
+\cleardoublepage                %%% start again on odd page
+%
+% Table of Contents:
+\pagenumbering{roman}           %%% Roman page numbers for ToC
+\setcounter{page}{1}
+\pdfbookmark[1]{Contents}{toc}  %%% additional bookmark for ToC
+\thispagestyle{plain}           %%% uses the above defined fancy
+                                %%% page-header 
+\tableofcontents
+\markboth{Table of Contents}{Table of Contents} %%% for the page
+                                                %%% header 
+\cleardoublepage                %%% start again on odd page
+\pagenumbering{arabic}          %%% from now on Arabic page numbers
+\setcounter{page}{1}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Introduction}
+Bootstrapping is a powerful principle that I want to apply to the idea of
+writing a literate program, this file, out of which I'll generate a tool, \ew,
+that can process the literate program that generated \ew itself.
+
+\ew is just another name for ``\nw without bells and whistles\footnote{It seems
+  a contradiction of terms to think that \nw should be slimmed down}''.
+
+All generated code will be marked with the following warning:
+<<generated code warning>>=
+AUTOMATICALLY GENERATED FROM eweb.nw: ANY CHANGES WILL BE OVERWRITTEN.
+@ 
+
+The automatic target for this work is \ew.
+The software is for now a single piece of text (a.k.a. a \py~file):
+<<*>>=
+<<eweb.py>>
+@
+I control the project version number\footnote{The version id is composed
+  of 3 integers (separated by a dot)  which stand for
+  \begin{quote}
+    @<major version>.<minor version>.<revision>
+  \end{quote}
+  Then version number \texttt{0.9.2} means revision $2$ of project
+  version $0.9$.} in a centralised way. 
+<<project version>>=
+0.1.0
+@
+<<eweb.py>>=
+<<testa>>
+<<core>>
+<<coda>>
+
+@ The script starts with the classic sh-bang and a comment describing it and
+some vertioning info.
+<<testa>>=
+<<sh-bang>>
+<<comment and version>>
+@ With sh-bang we refer the automatic interpretation by the default shell of the
+script. 
+<<sh-bang>>=
+#!/usr/bin/env python
+@ a little bit of description and acknowledgements are due:
+<<comment and version>>=
+# This is version <<project version>> of eWeb a Literate Programming tool.
+# Inspired by Norman Ramsey and his wonderful noweb
+# <<small copyright>>
+@ 
+<<small copyright>>=
+Copyright 2011 Enrico Spinielli. Free to use and distribute under MIT license.
+@ 
+\chapter{The Implementation}
+\label{ch:core}
+Here is the kernel of the beast.
+<<core>>=
+<<main and cmd line options>>
+
+@ TODO: epilog with automated year.
+<<main and cmd line options>>=
+def main():
+    from optparse import OptionParser
+    usage = "%prog [options] FILE ..."
+    description = "Parse and process Literate Programs using by default noweb chunk formats. "
+    "%prog uses a pipeline so that it can be easily extended/retargeted.\nThe default pipeline is:"
+    "MARKUP FILE | toIdx - | toTeX -"
+    epilog = "<<small copyright>>"
+    parser = OptionParser(usage=usage,
+                          description=description,
+                          epilog=epilog,
+                          version="%prog <<project version>>")
+    parser.add_option("-v", "--verbose",
+                      action="store_true",
+                      dest="verbose",
+                      help="make lots of noise")
+
+    parser.add_option("-q", "--quiet",
+                      action="store_false", default=True,
+                      dest="verbose",
+                      help="be very quiet " "[default: %default]")
+
+    parser.add_option("-t", "--suppress-tex",
+                      action="store_false", default=False,
+                      dest="suppressGenerationOfTeX",
+                      help="Suppress generation of a TeX file " "[default: %default]")
+
+    parser.add_option("-o", "--suppress-output",
+                      dest="suppressOutput",
+                      action="store_false", default=False,
+                      help="Suppress generation of output files")
+
+    parser.add_option("-l", "--line-format",
+                      default='#line %L "%F"%N',
+                      dest="lineNumberFormat",
+                      metavar="FORMAT",
+                      help="Line-number information for starred output files "
+                      "[default: '%default']")
+
+    parser.add_option("-m", "--markup-parser",
+                      default='markup',
+                      dest="markupParser",
+                      metavar="PARSER",
+                      help="Program to parse the input " "[default: %default]")
+
+    (options, args) = parser.parse_args()
+    if len(args) != 1:
+        parser.error("incorrect number of arguments")
+    if options.verbose:
+        print "### Options = %s " % options 
+        print "### Args = %s" % args
+
+if __name__ == "__main__":
+    main()
+@ def main
+@
+This is the end.
+<<coda>>=
+# end of eWeb code
+
+@
+%\clearpage
+\addcontentsline{toc}{chapter}{\bibname}
+\bibliographystyle{plain}
+\bibliography{iweb}
+\label{sec:biblio}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+%\appendixpage
+%\addappheadtotoc
+@
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{License}
+\label{ch:license}
+I adopt MIT's license, i.e. do whatever you want with this software, just say
+a word about where it comes from. And I do not claim it is flawless!
+<<LICENSE>>=
+# Copyright (c) 2011 Enrico Spinielli
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+@ 
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Make It Work}
+\label{ch:make}
+The Makefile I defined is minimalistically simple.
+
+<<Makefile>>=
+# -*- makefile -*-
+# <<generated code warning>>
+<<Makefile: heading comment>>
+VERSION = <<project version>>
+
+NW_MAIN=eweb.nw
+
+<<Makefile: command definitions>>
+<<Makefile: suffixes and rules>>
+<<Makefile: version control>>
+<<Makefile: clean>>
+
+@ Just define the various commands and relevant options
+<<Makefile: command definitions>>=
+PDFLATEX=pdflatex
+BIBTEX=bibtex
+NOINDEX=noindex
+# change to ">" to ensure all sources are always made
+CPIF=| cpif
+
+PRE=cat $(NW_MAIN)
+NOTANGLE=$(PRE) | notangle
+NOWEAVE=$(PRE)  | noweave -n -delay
+
+@
+ Define suffixes for literate specific targets
+<<Makefile: suffixes and rules>>=
+.SUFFIXES:
+.SUFFIXES: .nw .tex .py .defs .pdf
+
+.nw.py:
+	$(NOTANGLE) -filter btdefn -R$*.py - $(CPIF) $*.py
+
+.nw.tex:
+	$(NOWEAVE) -filter btdefn -index - $(CPIF) $*.tex
+
+.tex.pdf:
+	$(PDFLATEX) $*; \
+	$(NOINDEX) $*; \
+	if grep -s 'There were undefined references' $*.log;\
+	then $(BIBTEX) $*; fi;\
+	while grep -s 'Rerun to get cross-references right' $*.log;\
+	do $(PDFLATEX) $*;\
+	done; \
+
+# %.chk (this is a check for latex)
+# Do not delete the following targets:
+.PRECIOUS: %.aux %.bbl
+
+.PHONY : all
+all: code doc 
+
+.PHONY : code
+code: eweb.py
+
+.PHONY : eweb
+eweb: code
+	-ln -fs ./eweb.py ./eweb
+	-chmod u+x eweb
+
+
+.PHONY : doc
+doc:
+	$(MAKE) $(NW_MAIN:.nw=.pdf)
+
+
+@
+
+<<Makefile: heading comment>>=
+################################################################################
+# Author: Enrico Spinielli
+#
+# Makefile for my eweb project.
+# Got hints from Makefile in Noweb distibution
+#
+################################################################################
+
+@ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+<<Makefile: clean>>=
+.PHONY : clean clobber xclean
+clobber: clean
+
+clean:
+	rm -fR $(NW_MAIN:.nw=.tex) \
+               $(NW_MAIN:.nw=.py) \
+               $(NW_MAIN:.nw=.pyc) \
+               $(NW_MAIN:.nw=.pdf) \
+               $(NW_MAIN:.nw=.dvi) \
+               $(NW_MAIN:.nw=.aux) \
+               $(NW_MAIN:.nw=.log) \
+               $(NW_MAIN:.nw=.blg) \
+               $(NW_MAIN:.nw=.toc) \
+               $(NW_MAIN:.nw=.bbl) \
+               $(NW_MAIN:.nw=.idx) \
+               $(NW_MAIN:.nw=.nwi) \
+               $(NW_MAIN:.nw=.out) \
+               $(NW_MAIN:.nw=.defs) \
+               ./eweb
+
+
+# ask to remove all files not recognized by git
+xclean: clean
+	for f in $$(git status --porcelain | grep -e '^?' | sed -e 's/^?? //g'); \
+   do \
+      rm -i $$f; \
+   done
+@
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Version control}
+I stored my code in git code repo, \url{http://www.git.com/}.
+
+Usual commands I use:
+\begin{verbatim}
+$ cd <my repo>
+$ git status -short   # to see what has changed
+$ git add file1       # to add a new element in the repo
+$ git pull            # to retrieve changes from the repo
+$ git commit          # to commit changes to the local repo
+$ git pull            # to upload changes from the server repo
+\end{verbatim}
+
+I added some handy commands to Makefile ot make my life easier
+<<Makefile: version control>>=
+status:
+	git status --porcelain
+@
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Chunks}
+\section{Chunks Index}
+\label{sec:chunks}
+\nowebchunks
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Chunks Identifiers}
+\label{sec:ids}
+\nowebindex
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\printindex
+
+\end{document}
